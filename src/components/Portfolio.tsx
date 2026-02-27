@@ -1,104 +1,107 @@
 import React from 'react';
 import { 
+  Building2, 
   MapPin, 
-  Plus, 
-  Search, 
-  ChevronRight,
-  Home,
-  Users
+  Users, 
+  TrendingUp, 
+  MoreVertical, 
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  CheckCircle2
 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { motion } from 'framer-motion';
 
-export const Portfolio: React.FC = () => {
-  const properties = [
-    { 
-      id: 1, 
-      name: 'Oakwood Residences', 
-      address: '1240 Market St, San Francisco', 
-      units: 48, 
-      occupancy: 96, 
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800' 
-    },
-    { 
-      id: 2, 
-      name: 'Tech Plaza Lofts', 
-      address: '88 Bryant St, San Francisco', 
-      units: 120, 
-      occupancy: 92, 
-      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800' 
-    },
-    { 
-      id: 3, 
-      name: 'The Grand View', 
-      address: '550 Skyline Blvd, San Francisco', 
-      units: 75, 
-      occupancy: 100, 
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800' 
-    },
-  ];
+const Portfolio: React.FC = () => {
+  const { properties } = useApp();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md w-full">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search properties..." 
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-          />
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Property Portfolio</h1>
+          <p className="text-slate-500 mt-1">Manage all your buildings and assets from a single view.</p>
         </div>
-        <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">
-          <Plus size={18} />
-          Add Property
-        </button>
+        <Button className="bg-blue-600 hover:bg-blue-700 flex gap-2">
+          <Plus size={18} /> Add Property
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {properties.map((prop) => (
-          <div key={prop.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col">
-            <div className="relative h-40 sm:h-48 overflow-hidden">
-              <img src={prop.image} alt={prop.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute top-3 left-3 md:top-4 md:left-4">
-                <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-bold text-slate-900 shadow-sm">
-                  {prop.units} Units
-                </span>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-              <div className="absolute bottom-3 left-3 right-3 md:bottom-4 md:left-4 md:right-4">
-                <h3 className="text-white font-bold text-base md:text-lg leading-tight truncate">{prop.name}</h3>
-                <div className="flex items-center gap-1 text-white/80 mt-1">
-                  <MapPin size={10} className="md:w-3 md:h-3" />
-                  <span className="text-[10px] md:text-xs truncate">{prop.address}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {properties.map((property, i) => (
+          <motion.div
+            key={property.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-shadow group">
+              <div className="relative h-56 overflow-hidden">
+                <img 
+                  src={property.image} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  alt={property.name} 
+                />
+                <div className="absolute top-4 right-4">
+                  <span className="bg-white/90 backdrop-blur-md text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                    {property.totalUnits} Units
+                  </span>
                 </div>
-              </div>
-            </div>
-            
-            <div className="p-5 md:p-6 flex-1 flex flex-col">
-              <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <div className="flex items-center gap-2 text-slate-400 mb-1">
-                    <Home size={12} className="md:w-3.5 md:h-3.5" />
-                    <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Occupancy</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                  <h3 className="text-xl font-bold text-white">{property.name}</h3>
+                  <div className="flex items-center gap-1.5 text-white/80 text-sm mt-1">
+                    <MapPin size={14} />
+                    {property.address}, {property.city}
                   </div>
-                  <p className="text-base md:text-lg font-bold text-slate-900">{prop.occupancy}%</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <div className="flex items-center gap-2 text-slate-400 mb-1">
-                    <Users size={12} className="md:w-3.5 md:h-3.5" />
-                    <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-wider">Tenants</span>
-                  </div>
-                  <p className="text-base md:text-lg font-bold text-slate-900">{Math.floor(prop.units * (prop.occupancy / 100))}</p>
                 </div>
               </div>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-3 rounded-xl bg-slate-50">
+                    <p className="text-xs text-slate-500 mb-1">Occupancy</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900">
+                        {Math.round(((property.totalUnits - property.availableUnits) / property.totalUnits) * 100)}%
+                      </span>
+                      <ArrowUpRight size={14} className="text-emerald-500" />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50">
+                    <p className="text-xs text-slate-500 mb-1">Rev. (M)</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900">$124.5k</span>
+                      <TrendingUp size={14} className="text-blue-500" />
+                    </div>
+                  </div>
+                </div>
 
-              <div className="mt-auto flex items-center justify-between text-indigo-600 font-bold text-xs md:text-sm">
-                <span>Manage Details</span>
-                <ChevronRight size={18} />
-              </div>
-            </div>
-          </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1">View Details</Button>
+                  <Button variant="outline" size="icon">
+                    <MoreVertical size={18} />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
+
+        {/* Placeholder for Add New */}
+        <button className="h-full min-h-[400px] border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-4 hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+          <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-blue-100 transition-colors">
+            <Plus size={32} className="text-slate-400 group-hover:text-blue-600" />
+          </div>
+          <div className="text-center">
+            <p className="font-bold text-slate-700">Add New Property</p>
+            <p className="text-xs text-slate-500 mt-1">Scale your portfolio</p>
+          </div>
+        </button>
       </div>
     </div>
   );
 };
+
+export default Portfolio;

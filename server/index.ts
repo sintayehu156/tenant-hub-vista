@@ -2,7 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import { createClient } from '@supabase/supabase-js';
 import { PropertyModel, UnitModel, MaintenanceRequestModel, InvoiceModel, UserModel } from './models';
 
 dotenv.config();
@@ -10,21 +10,63 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Initialize Supabase Admin for verifying tokens and handling role/user lookups
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
 app.use(cors());
 app.use(express.json());
 
-// --- MOCK AUTH MIDDLEWARE ---
-const authenticateToken = (req: any, res: any, next: any) => {
+// --- SUPABASE AUTH MIDDLEWARE ---
+const authenticateToken = async (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) return res.sendStatus(401);
+  if (!token) return res.status(401).json({ message: 'No token provided' });
 
-  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err: any, user: any) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    
+    if (error || !user) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+
+    // Fetch user profile from Supabase profiles table for role/orgId
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role, org_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return res.status(403).json({ message: 'User profile not found' });
+    }
+
+    // Attach user, role, and orgId to request
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: profile.role,
+      orgId: profile.org_id
+    };
+    
     next();
-  });
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(500).json({ message: 'Authentication error' });
+  }
+};
+
+// --- AUTHORIZATION MIDDLEWARE (RBAC) ---
+const checkRole = (roles: string[]) => {
+  return (req: any, res: any, next: any) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
+    next();
+  };
 };
 
 // --- API ROUTES (RESTful) ---
@@ -32,9 +74,9 @@ const authenticateToken = (req: any, res: any, next: any) => {
 /**
  * @route   GET /api/properties
  * @desc    Get all properties for the organization
- * @access  Private
+ * @access  Private (Owner, Manager, Staff)
  */
-app.get('/api/properties', authenticateToken, async (req: any, res) => {
+app.get('/api/properties', authenticateToken, checkRole(['owner', 'manager', 'staff']), async (req: any, res) => {
   try {
     const properties = await PropertyModel.find({ orgId: req.user.orgId });
     res.json(properties);
@@ -74,27 +116,6 @@ app.get('/api/invoices', authenticateToken, async (req: any, res) => {
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
-});
-
-// --- ERPNext Integration Mock Endpoints ---
-/**
- * These endpoints are designed for high interoperability, allowing external systems 
- * like ERPNext to sync financial data or property status.
- */
-app.get('/api/v1/sync/finance', authenticateToken, async (req, res) => {
-  // Logic to export data in a format ERPNext expects (e.g., JSON Schema specific to ERPNext API)
-  const invoices = await InvoiceModel.find({ status: 'paid' });
-  res.json({
-    external_system: 'ERPNext',
-    sync_date: new Date(),
-    records: invoices.map(inv => ({
-      naming_series: 'ACC-INV-.YYYY.-',
-      posting_date: inv.updatedAt,
-      customer: inv.tenantId,
-      amount: inv.amount,
-      status: 'Paid'
-    }))
-  });
 });
 
 // Database Connection

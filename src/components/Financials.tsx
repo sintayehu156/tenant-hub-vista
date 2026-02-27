@@ -1,114 +1,117 @@
 import React from 'react';
 import { 
+  DollarSign, 
+  TrendingUp, 
   ArrowUpRight, 
   ArrowDownRight, 
-  Search, 
-  Filter, 
+  Calendar,
   Download,
-  MoreHorizontal
+  Filter,
+  BarChart3,
+  PieChart
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { motion } from 'framer-motion';
 
-export const Financials: React.FC = () => {
+const Financials: React.FC = () => {
+  const summary = [
+    { label: 'Total Revenue', value: '$142,500', trend: '+12.5%', isPositive: true },
+    { label: 'Net Profit', value: '$84,200', trend: '+8.2%', isPositive: true },
+    { label: 'Operating Costs', value: '$58,300', trend: '+4.1%', isPositive: false },
+    { label: 'Outstanding Rent', value: '$6,400', trend: '-15%', isPositive: true },
+  ];
+
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Gross Revenue (MTD)</p>
-          <div className="flex items-center justify-between mt-2">
-            <h3 className="text-2xl md:text-3xl font-black text-slate-900">$124,500</h3>
-            <span className="flex items-center gap-1 text-[10px] md:text-xs font-bold text-emerald-500">
-              <ArrowUpRight size={14} /> 8.2%
-            </span>
-          </div>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Financial Reports</h1>
+          <p className="text-slate-500 mt-1">Detailed breakdown of income, expenses, and portfolio performance.</p>
         </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Accounts Receivable</p>
-          <div className="flex items-center justify-between mt-2">
-            <h3 className="text-2xl md:text-3xl font-black text-amber-600">$12,840</h3>
-            <span className="flex items-center gap-1 text-[10px] md:text-xs font-bold text-red-500">
-              <ArrowDownRight size={14} /> 4.1%
-            </span>
-          </div>
-        </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm sm:col-span-2 lg:col-span-1">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Operating Expenses</p>
-          <div className="flex items-center justify-between mt-2">
-            <h3 className="text-2xl md:text-3xl font-black text-slate-900">$42,120</h3>
-            <span className="text-[10px] md:text-xs font-bold text-slate-400">Fixed Costs</span>
-          </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex gap-2">
+            <Calendar size={18} /> Last 30 Days
+          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 flex gap-2">
+            <Download size={18} /> Export PDF
+          </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-5 md:p-8 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6">
-          <div>
-            <h3 className="text-lg md:text-xl font-bold text-slate-900">Invoices & Billing</h3>
-            <p className="text-xs md:text-sm text-slate-500 mt-1">Manage tenant invoices and reconciliation</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="relative flex-1 sm:flex-none sm:w-64">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search invoices..." 
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs md:text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              />
-            </div>
-            <button className="p-2 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors shrink-0">
-              <Filter size={18} className="text-slate-500" />
-            </button>
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs md:text-sm font-bold hover:bg-indigo-700 transition-all shrink-0">
-              <Download size={16} />
-              Export
-            </button>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {summary.map((item, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-slate-500 mb-1">{item.label}</p>
+                <div className="flex items-end justify-between">
+                  <h3 className="text-2xl font-bold text-slate-900">{item.value}</h3>
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${
+                    item.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                  }`}>
+                    {item.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                    {item.trend}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Invoice</th>
-                <th className="px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Tenant</th>
-                <th className="hidden md:table-cell px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Property</th>
-                <th className="px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="hidden sm:table-cell px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Due Date</th>
-                <th className="px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Amount</th>
-                <th className="px-4 md:px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {[
-                { id: 'INV-0801', tenant: 'Michael S.', prop: 'Oakwood #102', status: 'Pending', due: 'Aug 01', amount: 2450.00 },
-                { id: 'INV-0802', tenant: 'Jim H.', prop: 'Oakwood #405', status: 'Paid', due: 'Aug 01', amount: 1850.00 },
-                { id: 'INV-0803', tenant: 'Pam B.', prop: 'Tech Plaza #88', status: 'Overdue', due: 'Jul 01', amount: 3200.00 },
-              ].map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer">
-                  <td className="px-4 md:px-8 py-4 font-mono text-[10px] md:text-xs font-bold text-indigo-600">{inv.id}</td>
-                  <td className="px-4 md:px-8 py-4 font-bold text-slate-900 text-xs md:text-sm">{inv.tenant}</td>
-                  <td className="hidden md:table-cell px-4 md:px-8 py-4 text-xs text-slate-500">{inv.prop}</td>
-                  <td className="px-4 md:px-8 py-4">
-                    <span className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
-                      inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 
-                      inv.status === 'Overdue' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                    }`}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="hidden sm:table-cell px-4 md:px-8 py-4 text-xs text-slate-500 whitespace-nowrap">{inv.due}</td>
-                  <td className="px-4 md:px-8 py-4 text-right font-black text-slate-900 text-xs md:text-sm">${inv.amount.toLocaleString()}</td>
-                  <td className="px-4 md:px-8 py-4 text-right">
-                    <button className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600">
-                      <MoreHorizontal size={18} />
-                    </button>
-                  </td>
-                </tr>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2 shadow-sm border-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Revenue Distribution</CardTitle>
+            <BarChart3 className="text-slate-400" size={20} />
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 flex items-end justify-between gap-4 pt-4">
+              {[60, 45, 80, 55, 90, 70, 85].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="w-full bg-blue-100 rounded-t-lg relative group transition-all" style={{ height: `${h}%` }}>
+                    <div className="absolute inset-0 bg-blue-600 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold">MON</span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Expense Breakdown</CardTitle>
+            <PieChart className="text-slate-400" size={20} />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { label: 'Maintenance', value: '$22,400', color: 'bg-blue-500' },
+                { label: 'Utilities', value: '$14,200', color: 'bg-emerald-500' },
+                { label: 'Taxes', value: '$12,500', color: 'bg-violet-500' },
+                { label: 'Management', value: '$9,200', color: 'bg-amber-500' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                    <span className="text-sm font-medium text-slate-600">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
+
+export default Financials;

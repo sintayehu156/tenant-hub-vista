@@ -1,154 +1,160 @@
-export type Role = 'admin' | 'manager' | 'staff' | 'tenant' | 'vendor';
-
-export interface User {
-  id: string;
-  orgId: string;
-  name: string;
-  email: string;
-  role: Role;
-  avatar?: string;
-  phone?: string;
-  createdAt: string;
-}
-
-export interface Organization {
+export type Organization = {
   id: string;
   name: string;
   logo?: string;
   address: string;
-  subscription: 'basic' | 'pro' | 'enterprise';
-}
+  taxId?: string;
+  createdAt: string;
+};
 
-export interface Property {
+export type Property = {
   id: string;
-  orgId: string;
   name: string;
   address: string;
-  type: 'residential' | 'commercial' | 'industrial' | 'mixed';
+  city: string;
+  state: string;
+  zipCode: string;
   image: string;
-  description?: string;
-}
+  ownerId: string;
+  organizationId: string;
+  totalUnits: number;
+  availableUnits: number;
+  createdAt: string;
+};
 
-export interface Building {
+export type Building = {
   id: string;
   propertyId: string;
   name: string;
   floors: number;
-  unitsCount: number;
-}
+  totalUnits: number;
+  createdAt: string;
+};
 
-export interface Unit {
+export type Unit = {
   id: string;
   buildingId: string;
+  propertyId: string;
   unitNumber: string;
-  floor: number;
-  type: 'studio' | '1br' | '2br' | '3br' | 'commercial';
-  rentAmount: number;
-  status: 'vacant' | 'occupied' | 'maintenance' | 'reserved';
-  size?: number; // in sq ft
-}
+  type: 'studio' | '1br' | '2br' | '3br' | 'penthouse';
+  status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+  rent: number;
+  squareFootage: number;
+  tenantId?: string;
+  createdAt: string;
+};
 
-export interface Tenant {
+export type Tenant = {
   id: string;
-  userId: string;
-  orgId: string;
-  unitId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  unitId?: string;
   leaseId?: string;
-  status: 'active' | 'former' | 'pending';
-  moveInDate: string;
-  moveOutDate?: string;
-}
+  balance: number;
+  createdAt: string;
+};
 
-export interface Lease {
+export type Lease = {
   id: string;
-  tenantId: string;
   unitId: string;
+  tenantId: string;
   startDate: string;
   endDate: string;
   rentAmount: number;
   depositAmount: number;
   status: 'active' | 'pending' | 'expired' | 'terminated';
-  terms?: string;
-}
+  documentUrl?: string;
+  createdAt: string;
+};
 
-export interface Invoice {
+export type Invoice = {
   id: string;
-  leaseId: string;
   tenantId: string;
+  leaseId: string;
   amount: number;
+  type: 'rent' | 'utility' | 'maintenance' | 'other';
+  status: 'paid' | 'unpaid' | 'overdue' | 'void';
   dueDate: string;
-  status: 'unpaid' | 'paid' | 'overdue' | 'void';
-  type: 'rent' | 'utility' | 'maintenance' | 'deposit' | 'other';
-  description?: string;
-}
+  paidDate?: string;
+  createdAt: string;
+};
 
-export interface Payment {
+export type Payment = {
   id: string;
   invoiceId: string;
   tenantId: string;
   amount: number;
-  date: string;
-  method: 'bank_transfer' | 'credit_card' | 'cash' | 'check';
+  method: 'credit_card' | 'bank_transfer' | 'check' | 'cash';
   status: 'completed' | 'pending' | 'failed';
-  transactionId?: string;
-}
+  date: string;
+  createdAt: string;
+};
 
-export interface MaintenanceRequest {
+export type MaintenanceRequest = {
   id: string;
   unitId: string;
   tenantId: string;
+  propertyId: string;
+  category: 'plumbing' | 'electrical' | 'hvac' | 'appliance' | 'structural' | 'other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'new' | 'in_progress' | 'scheduled' | 'completed' | 'cancelled';
   title: string;
   description: string;
-  category: 'plumbing' | 'electrical' | 'hvac' | 'appliance' | 'structural' | 'other';
-  priority: 'low' | 'medium' | 'high' | 'emergency';
-  status: 'open' | 'assigned' | 'in_progress' | 'resolved' | 'closed';
-  assignedVendorId?: string;
-  createdAt: string;
-  resolvedAt?: string;
   images?: string[];
-}
+  vendorId?: string;
+  scheduledAt?: string;
+  completedAt?: string;
+  createdAt: string;
+};
 
-export interface Vendor {
+export type Vendor = {
   id: string;
-  orgId: string;
   name: string;
-  category: string;
-  contactName: string;
+  specialty: string;
   email: string;
   phone: string;
   rating: number;
-  status: 'active' | 'inactive';
-}
+  createdAt: string;
+};
 
-export interface Document {
+export type Document = {
   id: string;
-  orgId: string;
-  userId?: string;
-  propertyId?: string;
-  unitId?: string;
-  leaseId?: string;
-  title: string;
+  name: string;
   url: string;
-  type: 'lease_agreement' | 'invoice' | 'id_proof' | 'maintenance_report' | 'other';
-  uploadedAt: string;
-}
+  type: 'lease' | 'insurance' | 'tax' | 'receipt' | 'other';
+  relatedId: string; // Tenant, Property, or Lease ID
+  uploadedBy: string;
+  createdAt: string;
+};
 
-export interface Notification {
+export type Notification = {
   id: string;
   userId: string;
   title: string;
-  content: string;
-  type: 'info' | 'warning' | 'success' | 'alert';
-  read: boolean;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
   createdAt: string;
-}
+};
 
-export interface AuditLog {
+export type AuditLog = {
   id: string;
   userId: string;
   action: string;
-  resource: string;
-  resourceId: string;
-  metadata?: any;
-  timestamp: string;
-}
+  details: string;
+  entityType: string;
+  entityId: string;
+  createdAt: string;
+};
+
+export type UserRole = 'owner' | 'manager' | 'tenant';
+
+export type User = {
+  id: string;
+  email: string;
+  role: UserRole;
+  profile: Tenant | { id: string; firstName: string; lastName: string; avatar?: string; organizationId: string };
+};
