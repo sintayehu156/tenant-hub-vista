@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 const Login: React.FC = () => {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -10,21 +11,22 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Successfully logged in!');
+    
+    try {
+      await signIn(email, password);
+    } catch (err) {
+      // Error handled in AuthContext/toast
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Welcome Back</h1>
-          <p className="text-slate-500 mt-2">Sign in to your property portal</p>
+          <h1 className="text-2xl font-bold text-slate-900">Property Portal Login</h1>
+          <p className="text-slate-500 mt-2 text-sm">Secure access for tenants and property managers</p>
         </div>
         
         <form onSubmit={handleLogin} className="space-y-4">
@@ -53,14 +55,14 @@ const Login: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Sign In'}
           </button>
         </form>
         
-        <div className="mt-6 text-center text-sm text-slate-500">
-          <p>Contact your property manager for access credentials.</p>
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+          <p>© 2025 Property Management Systems. Protected by Supabase Auth.</p>
         </div>
       </div>
     </div>

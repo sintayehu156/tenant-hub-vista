@@ -4,92 +4,81 @@ import {
   Notification, AuditLog, User 
 } from '../types';
 import { supabase } from './supabase';
+import { apiService } from './api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
+/**
+ * ApiClient refactored to use Supabase instead of a mock/proxy.
+ * This provides the frontend with a direct, secure interface to the persistence layer.
+ */
 class ApiClient {
-  private async getHeaders() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    };
+  
+  // User Profile
+  async getCurrentUser(): Promise<User | null> {
+    const { data, error } = await apiService.auth.me();
+    if (error) return null;
+    return data as unknown as User;
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const headers = await this.getHeaders();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Request failed: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  // Initialize data - no longer needed with real backend but keeping for compatibility
-  async initialize() {}
-
-  // User
-  async getCurrentUser(): Promise<User> {
-    return this.request<User>('/user/me');
-  }
-
-  // Properties
+  // Properties & Buildings
   async getProperties(): Promise<Property[]> {
-    return this.request<Property[]>('/properties');
+    const { data, error } = await apiService.properties.getAll();
+    return (data || []) as Property[];
   }
 
-  async addProperty(property: Omit<Property, 'id' | 'createdAt'>): Promise<Property> {
-    return this.request<Property>('/properties', {
-      method: 'POST',
-      body: JSON.stringify(property),
-    });
+  async addProperty(property: Omit<Property, 'id' | 'createdAt'>): Promise<Property | null> {
+    const { data, error } = await apiService.properties.create(property);
+    return data as Property;
   }
 
-  // Maintenance
+  // Units
+  async getUnits(): Promise<Unit[]> {
+    const { data, error } = await apiService.units.getAll();
+    return (data || []) as Unit[];
+  }
+
+  // Maintenance Requests
   async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
-    return this.request<MaintenanceRequest[]>('/maintenance');
+    const { data, error } = await apiService.maintenance.getAll();
+    return (data || []) as MaintenanceRequest[];
   }
 
-  async createMaintenanceRequest(req: Omit<MaintenanceRequest, 'id' | 'createdAt'>): Promise<MaintenanceRequest> {
-    return this.request<MaintenanceRequest>('/maintenance', {
-      method: 'POST',
-      body: JSON.stringify(req),
-    });
+  async createMaintenanceRequest(req: any): Promise<MaintenanceRequest | null> {
+    const { data, error } = await apiService.maintenance.create(req);
+    return data as MaintenanceRequest;
   }
 
-  async updateMaintenanceStatus(id: string, status: MaintenanceRequest['status']): Promise<void> {
-    await this.request(`/maintenance/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
+  async updateMaintenanceStatus(id: string, status: string): Promise<void> {
+    await apiService.maintenance.updateStatus(id, status);
   }
 
-  // Invoices
+  // Invoices & Financials
   async getInvoices(): Promise<Invoice[]> {
-    return this.request<Invoice[]>('/invoices');
+    const { data, error } = await apiService.invoices.getAll();
+    return (data || []) as Invoice[];
   }
 
-  // Payments
   async getPayments(): Promise<Payment[]> {
-    return this.request<Payment[]>('/payments');
+    const { data, error } = await apiService.payments.getAll();
+    return (data || []) as Payment[];
   }
 
-  async processPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<Payment> {
-    return this.request<Payment>('/payments', {
-      method: 'POST',
-      body: JSON.stringify(payment),
-    });
+  async processPayment(payment: any): Promise<Payment | null> {
+    const { data, error } = await apiService.payments.create(payment);
+    return data as Payment;
+  }
+
+  // Documents
+  async getDocuments(orgId: string): Promise<Document[]> {
+    const { data, error } = await apiService.documents.getAll(orgId);
+    return (data || []) as Document[];
+  }
+
+  // Real-time Subscription Helper
+  subscribeToUpdates(table: string, callback: (payload: any) => void) {
+    return supabase
+      .channel(`public:${table}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table }, callback)
+      .subscribe();
   }
 }
 

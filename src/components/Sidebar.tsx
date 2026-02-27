@@ -9,10 +9,10 @@ import {
   LogOut, 
   Menu, 
   X,
-  Settings,
-  Bell
+  Settings
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 
@@ -23,6 +23,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange }) => {
   const { user, updateUserRole } = useApp();
+  const { signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const isManager = user?.role === 'manager' || user?.role === 'owner';
@@ -92,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange }) => {
                 {item.label}
               </button>
             );
-          })}
+          })} vacation
         </nav>
 
         <div className="p-4 mt-auto border-t border-slate-100">
@@ -126,9 +127,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange }) => {
               className="w-full flex items-center gap-3 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
             >
               <Settings size={18} />
-              Switch to {user?.role === 'manager' ? 'Tenant' : 'Manager'}
+              Switch Preview Role
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+            <button 
+              onClick={() => signOut()}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+            >
               <LogOut size={18} />
               Logout
             </button>

@@ -1,9 +1,6 @@
 import React from 'react';
 import { 
-  User, 
   Mail, 
-  Phone, 
-  MapPin, 
   Camera, 
   Shield, 
   Bell, 
@@ -12,13 +9,16 @@ import {
   LogOut
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { useAuth } from '../context/AuthContext';
+import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { motion } from 'framer-motion';
+import { cn } from '../lib/utils';
 
 const Profile: React.FC = () => {
   const { user } = useApp();
+  const { signOut } = useAuth();
 
   return (
     <div className="p-6 lg:p-10 max-w-4xl mx-auto space-y-8">
@@ -100,8 +100,12 @@ const Profile: React.FC = () => {
       </div>
 
       <div className="flex justify-center pt-4">
-        <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50 flex gap-2 font-semibold">
-          <LogOut size={18} /> Sign Out of All Devices
+        <Button 
+          variant="ghost" 
+          onClick={() => signOut()}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex gap-2 font-semibold"
+        >
+          <LogOut size={18} /> Sign Out
         </Button>
       </div>
     </div>
@@ -109,4 +113,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-import { cn } from '../lib/utils';

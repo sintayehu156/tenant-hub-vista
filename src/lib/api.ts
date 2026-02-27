@@ -1,65 +1,169 @@
-import axios, { AxiosResponse } from 'axios';
+import { supabase } from './supabase';
 import { toast } from 'sonner';
-import * as mock from './mockData';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const USE_MOCK = true; 
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
 
 export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success?: boolean;
+  data: T | null;
+  error?: any;
 }
 
-const mockCall = async <T>(data: T, delay = 500): Promise<ApiResponse<T>> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ data }), delay);
-  });
-};
-
-// Helper to convert AxiosResponse to ApiResponse
-const wrap = <T>(promise: Promise<AxiosResponse<T>>): Promise<ApiResponse<T>> => {
-  return promise.then(res => ({ data: res.data }));
-};
-
+/**
+ * API Service layer using Supabase client directly.
+ * This refactors the application to use PostgreSQL via Supabase for production.
+ */
 export const apiService = {
   auth: {
-    login: (credentials: any) => USE_MOCK 
-      ? mockCall({ user: mock.mockUsers.find(u => u.email === credentials.email) || mock.mockUsers[0], token: 'mock-jwt' })
-      : wrap(api.post('/auth/login', credentials)),
-    me: () => USE_MOCK 
-      ? mockCall(mock.mockUsers[0])
-      : wrap(api.get('/auth/me')),
+    login: async (credentials: any) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+      if (error) toast.error(error.message);
+      return { data, error };
+    },
+    logout: async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) toast.error(error.message);
+      return { error };
+    },
+    me: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) return { data: null, error };
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+        
+      return { data: profile, error };
+    },
   },
 
   properties: {
-    getAll: () => USE_MOCK ? mockCall(mock.mockProperties) : wrap(api.get<any[]>('/properties')),
-    getById: (id: string) => USE_MOCK ? mockCall(mock.mockProperties.find(p => p.id === id)) : wrap(api.get(`/properties/${id}`)),
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          buildings (
+            *,
+            units (*)
+          )
+        `);
+      if (error) toast.error('Failed to fetch properties');
+      return { data, error };
+    },
+    getById: async (id: string) => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*, buildings(*, units(*))')
+        .eq('id', id)
+        .single();
+      return { data, error };
+    },
+    create: async (property: any) => {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert(property)
+        .select()
+        .single();
+      return { data, error };
+    }
   },
 
   units: {
-    getAll: (params?: any) => USE_MOCK ? mockCall(mock.mockUnits) : wrap(api.get('/units', { params })),
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('units')
+        .select('*, buildings(property_id, name)');
+      return { data, error };
+    },
+    updateStatus: async (id: string, status: string) => {
+      const { data, error } = await supabase
+        .from('units')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+      return { data, error };
+    }
   },
 
   maintenance: {
-    getAll: (params?: any) => USE_MOCK ? mockCall(mock.mockMaintenance) : wrap(api.get('/maintenance', { params })),
-    create: (data: any) => USE_MOCK ? mockCall({ ...data, id: Math.random().toString() }) : wrap(api.post('/maintenance', data)),
-    updateStatus: (id: string, status: string) => USE_MOCK ? mockCall({ id, status }) : wrap(api.patch(`/maintenance/${id}/status`, { status })),
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .select('*, units(*), profiles!tenant_id(*)');
+      return { data, error };
+    },
+    create: async (request: any) => {
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .insert(request)
+        .select()
+        .single();
+      return { data, error };
+    },
+    updateStatus: async (id: string, status: string) => {
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      return { data, error };
+    },
   },
 
   invoices: {
-    getAll: (params?: any) => USE_MOCK ? mockCall(mock.mockInvoices) : wrap(api.get('/invoices', { params })),
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*, leases(*), profiles!tenant_id(*)');
+      return { data, error };
+    },
+    create: async (invoice: any) => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert(invoice)
+        .select()
+        .single();
+      return { data, error };
+    }
   },
   
   payments: {
-    getAll: () => USE_MOCK ? mockCall([]) : wrap(api.get('/payments')),
-    create: (data: any) => USE_MOCK ? mockCall({ ...data, id: Math.random().toString() }) : wrap(api.post('/payments', data)),
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*, invoices(*), profiles!tenant_id(*)');
+      return { data, error };
+    },
+    create: async (payment: any) => {
+      const { data, error } = await supabase
+        .from('payments')
+        .insert(payment)
+        .select()
+        .single();
+      return { data, error };
+    },
+  },
+
+  documents: {
+    getAll: async (orgId: string) => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('org_id', orgId);
+      return { data, error };
+    },
+    upload: async (doc: any) => {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert(doc)
+        .select()
+        .single();
+      return { data, error };
+    }
   }
 };
-
-export default api;
